@@ -79,12 +79,12 @@ class MyRow:
     def _convert_nested_rows(self, row):
         converted_row = {}
         try:
-            items = row.items()
+            row_dict = {key: row[key] for key in row.keys()}
         except AttributeError:
             row = dict(row)
-            items = row.items()
+            row_dict = row.items()
 
-        for key, value in items:
+        for key, value in row_dict:
             if isinstance(value, (SearchIterator)):
                 converted_row[key] = MySearchIterator(value)
             elif isinstance(value, (list)):

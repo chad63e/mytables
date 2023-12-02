@@ -1,6 +1,16 @@
 allow_embedding: false
-package_name: Material_Design_1
-name: Material Design 1
+package_name: MyTables
+db_schema: {}
+name: MyTables
 startup_form: Form1
-runtime_options: {version: 2, client_version: '3', server_version: python3-full, server_spec: null}
-services: []
+runtime_options:
+  version: 2
+  client_version: '3'
+  server_version: python3-full
+  server_spec: null
+  server_spec_disabled: {requirements: '', base: python310-minimal}
+metadata: {title: My Tables}
+services:
+- source: /runtime/services/tables.yml
+  client_config: {enable_v2: true}
+  server_config: {}

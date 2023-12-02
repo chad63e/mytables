@@ -3,7 +3,7 @@ unique_ids:
     Form1: 5MPI3FHA43HTLV3BOW436RL6TRIYLFAQ
   modules: {}
   server_modules:
-    ServerModule1: '1701540585760329063955839.715'
+    my_app_tables: '1701540585760329063955839.715'
   assets:
     standard-page.html: WSLEWEYPEELFJFOO2THRQPWODLVSECHU
     theme.css: H6DUBNHDZZIN574R2MQS4ITATP3MVQKE

@@ -277,7 +277,7 @@ class MyTable:
         args = serializer.to_anvil(args)
 
         search = self.table.search(*args, **kwargs) or []
-        if not return_anvil:
+        if return_anvil:
             return search
         elif len(search) > convert_limit:
             print(

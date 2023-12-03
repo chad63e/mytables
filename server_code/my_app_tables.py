@@ -130,6 +130,20 @@ class MyRow:
     def delete(self):
         return self.row.delete()
 
+    def get(self, key: str, default=None):
+        return MyRow(self.row.get(key, default))
+
+    def add_to_list_column(self, column: str, value):
+        current_list = self.row[column] or []
+        current_list.append(value)
+        self.update(**{column: current_list})
+
+    def remove_from_list_column(self, column: str, value):
+        current_list = self.row[column] or []
+        if value in current_list:
+            current_list.remove(value)
+            self.update(**{column: current_list})
+
     def get_anvil_row(self):
         return self.row
 
@@ -179,6 +193,15 @@ class MySearchIterator:
         return converted_rows
 
     # --- PUBLIC METHODS ---
+
+    def get_index(self, index: int, return_anvil: bool = False) -> MyRow:
+        if index >= len(self.search):
+            return None
+
+        if return_anvil:
+            return self.search[index]
+
+        return MyRow(self.search[index])
 
     def get_anvil_search(self):
         return getattr(self, "_anvil_search", [])

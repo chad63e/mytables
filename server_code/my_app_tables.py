@@ -24,21 +24,21 @@ class Serializer:
             # Handle non-MyRow data
             return data
 
-    def to_dict(self, data):
+    def serialize(self, data):
         if isinstance(data, Row):
             # Convert Row to a dictionary, handling nested Row objects recursively
             return {
-                key: self.to_dict(data[key])
+                key: self.serialize(data[key])
                 if isinstance(data[key], (Row, SearchIterator, list))
                 else data[key]
                 for key in data.keys()
             }
         elif isinstance(data, (SearchIterator, list)):
             # Convert each Row in the SearchIterator or list
-            return [self.to_dict(row) for row in data]
+            return [self.serialize(row) for row in data]
         elif isinstance(data, (MyRow, MySearchIterator)):
             # Convert MyRow or MySearchIterator to a dictionary
-            return self.to_dict(data.get_anvil_row())
+            return self.serialize(data.get_anvil_row())
         else:
             # Handle non-Row data
             return data
@@ -149,9 +149,9 @@ class MyRow:
 
     # --- SERIALIZATION ---
 
-    def to_dict(self):
+    def serialize(self):
         serilizer = Serializer()
-        return serilizer.to_dict(self.row)
+        return serilizer.serialize(self.row)
 
 
 class MySearchIterator:
@@ -208,9 +208,9 @@ class MySearchIterator:
 
     # --- SERIALIZATION ---
 
-    def to_dict(self):
+    def serialize(self):
         serilizer = Serializer()
-        return serilizer.to_dict(self.search)
+        return serilizer.serialize(self.search)
 
 
 class MyTable:

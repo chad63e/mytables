@@ -298,6 +298,7 @@ class MyTable:
     ) -> Union[SearchIterator, list]:
         serializer = Serializer()
         args = serializer.to_anvil(args)
+        kwargs = serializer.to_anvil(kwargs)
 
         search = self.table.search(*args, **kwargs) or []
         if return_anvil:

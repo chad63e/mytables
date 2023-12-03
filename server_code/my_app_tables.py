@@ -1,4 +1,3 @@
-import time
 from typing import List, Union
 
 import anvil.server
@@ -8,6 +7,23 @@ from anvil.tables import Row, SearchIterator, Table, app_tables
 
 
 class Serializer:
+    def to_anvil(self, data):
+        if isinstance(data, MyRow):
+            # Convert MyRow to an anvil.tables.Row
+            return data.get_anvil_row()
+        elif isinstance(data, MySearchIterator):
+            # Convert MySearchIterator to an anvil.tables.SearchIterator
+            return data.get_anvil_search()
+        elif isinstance(data, list):
+            # Convert each MyRow in the list
+            return [self.to_anvil(row) for row in data]
+        elif isinstance(data, dict):
+            # Convert each value in the dictionary
+            return {key: self.to_anvil(value) for key, value in data.items()}
+        else:
+            # Handle non-MyRow data
+            return data
+
     def to_dict(self, data):
         if isinstance(data, Row):
             # Convert Row to a dictionary, handling nested Row objects recursively
@@ -103,8 +119,11 @@ class MyRow:
     # --- PUBLIC METHODS (in_transaction) ---
 
     @tables.in_transaction
-    def update(self, **kwargs):
-        return self.row.update(**kwargs)
+    def update(self, **kwargs) -> None:
+        serializer = Serializer()
+        kwargs = serializer.to_anvil(kwargs)
+
+        self.row.update(**kwargs)
 
     # --- PUBLIC METHODS ---
 
@@ -172,12 +191,8 @@ class MySearchIterator:
 
 
 class MyTable:
-    def __init__(
-        self, name: str, convert_search: bool = True, convert_limit: int = 100
-    ):
+    def __init__(self, name: str):
         self.name = name
-        self.convert_search = convert_search
-        self.convert_limit = convert_limit
         self.table = self._initialize_table(name)
 
     # --- PROPERTIES ---
@@ -209,34 +224,64 @@ class MyTable:
     # --- PUBLIC METHODS (in_transaction) ---
 
     @tables.in_transaction
-    def add_row(self, **kwargs) -> Row:
-        return self.table.add_row(**kwargs)
+    def add_row(self, return_anvil: bool = False, **kwargs) -> Union[MyRow, Row]:
+        serializer = Serializer()
+        kwargs = serializer.to_anvil(kwargs)
+
+        row = self.table.add_row(**kwargs)
+        if return_anvil:
+            return row
+
+        return MyRow(self.table.add_row(**kwargs))
 
     @tables.in_transaction
-    def update_row(self, row: Union[Row, MyRow], **kwargs) -> Union[Row, MyRow]:
+    def update_row(
+        self, row: Union[Row, MyRow], return_anvil: bool = False, **kwargs
+    ) -> None:
         if isinstance(row, MyRow):
             row = row.row
-        return row.update(**kwargs)
+
+        row.update(**kwargs)
 
     # --- PUBLIC METHODS ---
 
-    def get(self, **kwargs) -> Union[Row, None]:
+    def get(self, return_anvil: bool = False, **kwargs) -> Union[MyRow, Row, None]:
+        serializer = Serializer()
+        kwargs = serializer.to_anvil(kwargs)
+
         row = self.table.get(**kwargs)
-        if row:
-            return MyRow(row)
+        if not row:
+            return None
 
-    def get_by_id(self, row_id: str) -> Union[Row, None]:
+        if return_anvil:
+            return row
+
+        return MyRow(row)
+
+    def get_by_id(
+        self, row_id: str, return_anvil: bool = False
+    ) -> Union[MyRow, Row, None]:
         row = self.table.get_by_id(row_id)
-        if row:
-            return MyRow(row)
+        if not row:
+            return None
 
-    def search(self, *args, **kwargs) -> Union[SearchIterator, list]:
+        if return_anvil:
+            return row
+
+        return MyRow(row)
+
+    def search(
+        self, *args, return_anvil: bool = False, convert_limit: int = 100, **kwargs
+    ) -> Union[SearchIterator, list]:
+        serializer = Serializer()
+        args = serializer.to_anvil(args)
+
         search = self.table.search(*args, **kwargs) or []
-        if not self.convert_search:
+        if not return_anvil:
             return search
-        elif len(search) > self.convert_limit:
+        elif len(search) > convert_limit:
             print(
-                f"WARNING: Search returned more than {self.convert_limit} results.  Will not convert to MySearchIterator object."
+                f"WARNING: Search returned more than {convert_limit} results.  Will not convert to MySearchIterator object."
             )
             return search
 

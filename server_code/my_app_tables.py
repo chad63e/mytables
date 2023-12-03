@@ -77,19 +77,23 @@ class MyRow:
     # --- PRIVATE METHODS ---
 
     def _convert_nested_rows(self, row):
-        converted_row = {}
-        try:
+        if isinstance(row, Row):
+            # Convert Row to a dictionary
             row_dict = {key: row[key] for key in row.keys()}
-        except AttributeError:
-            row = dict(row)
-            row_dict = row.items()
+        elif isinstance(row, dict):
+            # Use the dictionary as is
+            row_dict = row
+        else:
+            # For non-dictionary, non-Row types, return the value as is
+            return row
 
-        for key, value in row_dict:
-            if isinstance(value, (SearchIterator)):
+        converted_row = {}
+        for key, value in row_dict.items():
+            if isinstance(value, SearchIterator):
                 converted_row[key] = MySearchIterator(value)
-            elif isinstance(value, (list)):
+            elif isinstance(value, list):
                 converted_row[key] = [MyRow(item) for item in value]
-            elif isinstance(value, (Row)):
+            elif isinstance(value, Row):
                 converted_row[key] = MyRow(value)
             else:
                 converted_row[key] = value

@@ -255,7 +255,7 @@ class MyTable:
         if return_anvil:
             return row
 
-        return MyRow(self.table.add_row(**kwargs))
+        return MyRow(row)
 
     @tables.in_transaction
     def update_row(

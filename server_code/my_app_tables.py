@@ -135,8 +135,9 @@ class MyRow:
 
     def add_to_list_column(self, column: str, value):
         current_list = self.row[column] or []
-        current_list.append(value)
-        self.update(**{column: current_list})
+        if value not in current_list:
+            current_list.append(value)
+            self.update(**{column: current_list})
 
     def remove_from_list_column(self, column: str, value):
         current_list = self.row[column] or []

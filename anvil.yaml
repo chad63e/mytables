@@ -6,9 +6,9 @@ startup_form: Form1
 runtime_options:
   version: 2
   client_version: '3'
-  server_version: python3-full
+  server_version: python3-sandbox
   server_spec: null
-  server_spec_disabled: {requirements: '', base: python310-minimal}
+  server_spec_disabled: {requirements: '', base: python310-standard}
 metadata: {title: My Tables}
 services:
 - source: /runtime/services/tables.yml

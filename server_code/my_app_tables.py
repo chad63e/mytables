@@ -145,6 +145,41 @@ class MyRow:
             current_list.remove(value)
             self.update(**{column: current_list})
 
+    def add_to_dict_column(self, column: str, key, value):
+        current_dict = self.row[column] or {}
+        current_dict[key] = value
+        self.update(**{column: current_dict})
+
+    def remove_from_dict_column(self, column: str, key):
+        current_dict = self.row[column] or {}
+        if key in current_dict:
+            del current_dict[key]
+            self.update(**{column: current_dict})
+
+    def update_simple_object_column(self, column: str, data: Union[dict, list]):
+        current_column = self.row[column]
+        if not current_column:
+            if isinstance(data, (dict, list)):
+                self.update(column=data)
+            else:
+                raise TypeError(
+                    f"Unsupported data type {type(data)} for column {column}."
+                )
+        elif isinstance(current_column, type(data)):
+            if isinstance(data, dict):
+                for key, value in data.items():
+                    self.add_to_dict_column(column, key, value)
+            elif isinstance(data, list):
+                self.add_to_list_column(column, data)
+            else:
+                raise TypeError(
+                    f"Unsupported data type {type(data)} for column {column}."
+                )
+        else:
+            raise TypeError(
+                f"Data type mismatch: cannot update column {column} of type {type(current_column)} with value {data} of type {type(data)}."
+            )
+
     def get_anvil_row(self):
         return self.row
 

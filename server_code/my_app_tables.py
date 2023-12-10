@@ -131,7 +131,10 @@ class MyRow:
         return self.row.delete()
 
     def get(self, key: str, default=None):
-        return MyRow(self.row.get(key, default))
+        try:
+            return self.row[key]
+        except KeyError:
+            return default
 
     def add_to_list_column(self, column: str, value):
         current_list = self.row[column] or []

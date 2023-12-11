@@ -3,6 +3,7 @@ from typing import List, Union
 import anvil.server
 import anvil.tables as tables
 import anvil.tables.query as q
+from anvil._server import LiveObjectProxy
 from anvil.tables import Row, SearchIterator, Table, app_tables
 
 
@@ -25,7 +26,7 @@ class Serializer:
             return data
 
     def serialize(self, data):
-        if isinstance(data, Row):
+        if isinstance(data, (Row, LiveObjectProxy)):
             # Convert Row to a dictionary, handling nested Row objects recursively
             return {
                 key: self.serialize(data[key])
@@ -92,29 +93,57 @@ class MyRow:
 
     # --- PRIVATE METHODS ---
 
-    def _convert_nested_rows(self, row):
-        if isinstance(row, Row):
-            # Convert Row to a dictionary
+    def _convert_nested_rows(self, row, processed_objects=None):
+        if processed_objects is None:
+            processed_objects = set()
+
+        # Check for circular references
+        row_id = id(row)
+        if row_id in processed_objects:
+            return row  # Return the original row to avoid infinite recursion
+        processed_objects.add(row_id)
+
+        if isinstance(row, (Row, LiveObjectProxy)):
             row_dict = {key: row[key] for key in row.keys()}
         elif isinstance(row, dict):
-            # Use the dictionary as is
             row_dict = row
         else:
-            # For non-dictionary, non-Row types, return the value as is
-            return row
+            return row  # Base case for non-dict and non-Row types
 
         converted_row = {}
         for key, value in row_dict.items():
-            if isinstance(value, SearchIterator):
-                converted_row[key] = MySearchIterator(value)
-            elif isinstance(value, list):
-                converted_row[key] = [MyRow(item) for item in value]
-            elif isinstance(value, Row):
-                converted_row[key] = MyRow(value)
-            else:
-                converted_row[key] = value
+            value_id = id(value)
+            if value_id not in processed_objects:
+                processed_objects.add(value_id)
+                converted_value = self._process_value(value, processed_objects)
+                if converted_value is not None:
+                    converted_row[key] = converted_value
 
         return converted_row
+
+    def _process_value(self, value, processed_objects):
+        if isinstance(value, (MyRow, MySearchIterator)):
+            return value
+        elif isinstance(value, SearchIterator):
+            return MySearchIterator(value)
+        elif isinstance(value, list):
+            return [
+                self._convert_nested_rows(item, processed_objects)
+                for item in value
+                if id(item) not in processed_objects
+            ]
+        elif isinstance(value, (Row, LiveObjectProxy)):
+            return self._convert_live_object_proxy(value, processed_objects)
+        else:
+            return value
+
+    def _convert_live_object_proxy(self, value, processed_objects):
+        if "<LiveObject: anvil.tables.Row>" in str(value):
+            return MyRow(value)
+        elif "<LiveObject: anvil.tables.SearchIterator>" in str(value):
+            return MySearchIterator(value)
+        else:
+            return self._convert_nested_rows(value, processed_objects)
 
     # --- PUBLIC METHODS (in_transaction) ---
 

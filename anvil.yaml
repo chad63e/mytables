@@ -1,12 +1,26 @@
 allow_embedding: false
 package_name: MyTables
-db_schema: {}
+db_schema:
+  files:
+    client: none
+    server: full
+    columns:
+    - name: path
+      admin_ui: {order: 0, width: 200}
+      type: string
+    - name: file
+      admin_ui: {order: 1, width: 200}
+      type: media
+    - name: file_version
+      admin_ui: {order: 2, width: 200}
+      type: string
+    title: Files
 name: MyTables
 startup_form: Form1
 runtime_options:
   version: 2
   client_version: '3'
-  server_version: python3-sandbox
+  server_version: python3-full
   server_spec: null
   server_spec_disabled: {requirements: '', base: python310-standard}
 metadata: {title: My Tables}
@@ -14,3 +28,6 @@ services:
 - source: /runtime/services/tables.yml
   client_config: {enable_v2: true}
   server_config: {}
+- source: /runtime/services/anvil/files.yml
+  client_config: {}
+  server_config: {file_table: files}

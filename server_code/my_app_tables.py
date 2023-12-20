@@ -195,7 +195,7 @@ class MyRow:
         current_column = self.row[column]
         if not current_column:
             if isinstance(data, (dict, list)):
-                self.update(column=data)
+                self.row[column] = data
             else:
                 raise TypeError(
                     f"Unsupported data type {type(data)} for column {column}."
